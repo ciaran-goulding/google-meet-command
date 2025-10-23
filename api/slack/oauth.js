@@ -1,33 +1,48 @@
-// NOTE: This code is conceptual. You would need the correct
-// Slack SDK (e.g., @slack/web-api) and a library like axios to perform the HTTPS request.
+// Add require statement for axios
+const axios = require('axios');
+const qs = require('querystring'); 
 
 module.exports = async (req, res) => {
-    // 1. Check for the temporary authorization code in the URL
     const code = req.query.code;
-    
-    // Slack credentials needed for the exchange (must be set in Vercel env vars)
     const client_id = process.env.SLACK_CLIENT_ID;
     const client_secret = process.env.SLACK_CLIENT_SECRET;
-    const redirect_uri = 'https://google-meet-command.vercel.app/api/slack/oauth/callback'; // Must match exactly
+    
+    // IMPORTANT: This redirect_uri must EXACTLY match the one in your Slack App settings.
+    const redirect_uri = 'https://google-meet-command.vercel.app/api/slack/oauth/callback';
 
     if (!code) {
         return res.status(400).send('Error: Missing authorization code.');
     }
 
-    // 2. THIS IS THE CRITICAL STEP: Exchange the code for the permanent token
     try {
-        // In a real setup, you would use an HTTP client here to send a POST request to:
-        // 'https://slack.com/api/oauth.v2.access'
-        
-        // This request sends the client_id, client_secret, and code to get the final tokens.
-        
-        // Example of a successful operation:
-        
-        // **SUCCESSFUL INSTALLATION MESSAGE**
-        res.status(200).send('App installation complete! You can close this window now and use the /meet command.');
-        
+        // --- CRITICAL STEP: Exchange the temporary code for a permanent token ---
+        const response = await axios.post('https://slack.com/api/oauth.v2.access', 
+            qs.stringify({
+                client_id: client_id,
+                client_secret: client_secret,
+                code: code,
+                redirect_uri: redirect_uri,
+                grant_type: 'authorization_code'
+            }), {
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }
+        );
+
+        const data = response.data;
+
+        if (data.ok) {
+            // Success: App is installed, token is received and valid.
+            // data.access_token contains the permanent 'xoxb-' token.
+            res.status(200).send('App installation complete! You can close this window and use /meet in Slack.');
+        } else {
+            // Failure: Slack rejected the exchange (e.g., code expired, secret wrong)
+            res.status(500).send(`Installation failed: Slack Error: ${data.error}`);
+        }
+
     } catch (error) {
-        console.error('OAuth Token Exchange Failed:', error);
-        res.status(500).send(`Installation Failed: ${error.message}`);
+        console.error('External API Call Failed:', error);
+        res.status(500).send('Internal Server Error during token exchange.');
     }
 };
