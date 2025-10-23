@@ -1,0 +1,9 @@
+{
+  "name": "google-meet-command",
+  "version": "1.0.0",
+  "description": "Slack slash command for Google Meet",
+  "main": "api/meet.js",
+  "scripts": {
+    "start": "node api/meet.js"
+  }
+}
