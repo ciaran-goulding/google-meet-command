@@ -1,7 +1,19 @@
 {
+  "builds": [
+    {
+      "src": "api/meet.js",
+      "use": "@vercel/node@2.0.0"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/meet",
+      "dest": "api/meet.js"
+    }
+  ],
   "functions": {
     "api/**/*.js": {
       "runtime": "@vercel/node@2.0.0"
-      }
+    }
   }
 }
