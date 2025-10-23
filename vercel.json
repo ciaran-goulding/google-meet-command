@@ -1,11 +1,7 @@
 {
   "functions": {
     "api/**/*.js": {
-      "runtime": "@vercel/node@2.0.0",
-      "includeFiles": ["package.json"],
-      "memory": 1024,
-      "maxDuration": 30,
-      "node": "20.x"
-    }
+      "runtime": "@vercel/node@2.0.0"
+      }
   }
 }
