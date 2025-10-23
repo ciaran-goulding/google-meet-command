@@ -9,7 +9,7 @@
 const crypto = require('crypto');
 const qs = require('querystring');
 
-// --- 1. RATE LIMITING (Placeholder Logic) ---
+// --- 1. RATE LIMITING ---
 // Note: Vercel platforms have built-in rate-limiting, but this is a conceptual check.
 // This example does NOT persist state (required for true rate limiting).
 const rateLimitCheck = (req) => {
