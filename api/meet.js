@@ -23,7 +23,7 @@ const rateLimitCheck = (req) => {
 const verifySlackSignature = (req) => {
     const signature = req.headers['x-slack-signature'];
     const timestamp = req.headers['x-slack-request-timestamp'];
-    const signingSecret = process.env.SLACK_SIGNING_SECRET;
+    const signingSecret = process.env.2699d2e23abcf240275452387f9ba289;
 
     if (!signature || !timestamp || !signingSecret) {
         // Essential headers or secret missing

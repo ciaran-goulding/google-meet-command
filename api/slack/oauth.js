@@ -1,32 +1,34 @@
 // api/slack/oauth.js
+
 const axios = require('axios');
 const qs = require('querystring'); 
 
 module.exports = async (req, res) => {
-    // These credentials MUST be set in Vercel's Environment Variables
-    const client_id = process.env.6084984976915.9750145354564;
-    const client_secret = process.env.2291969b8bd885ed1a63005c52b625e1;
-
-    // 1. Extract the temporary authorization code from the query parameters
+    // --- 1. Load Credentials (Ensure they are accessed correctly) ---
+    const client_id = process.env.SLACK_CLIENT_ID;
+    const client_secret = process.env.SLACK_CLIENT_SECRET;
     const code = req.query.code;
     
-    // NOTE: This must EXACTLY match the Redirect URL configured in your Slack app.
-    const redirect_uri = 'https://meet.google.com/landing';
+    // IMPORTANT: This must match the URL you put in Slack's Redirect URLs field
+    const redirect_uri = 'https://google-meet-command.vercel.app/api/slack/oauth/callback'; 
 
     if (!code) {
-        return res.status(400).send('Error: Missing authorization code. Installation failed.');
+        return res.status(400).send('Installation Error: No authorization code received.');
     }
 
     try {
-        // 2. Exchange the temporary code for a permanent Bot User OAuth Token (xoxb-)
-        const response = await axios.post('https://slack.com/api/oauth.v2.access', 
+        // --- 2. CRITICAL STEP: Token Exchange Request ---
+        const tokenExchangeURL = 'https://slack.com/api/oauth.v2.access';
+        
+        const response = await axios.post(
+            tokenExchangeURL,
             qs.stringify({
                 client_id: client_id,
                 client_secret: client_secret,
                 code: code,
-                redirect_uri: redirect_uri,
-                grant_type: 'authorization_code'
-            }), {
+                redirect_uri: redirect_uri // Must be included and match
+            }),
+            {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded'
                 }
@@ -36,17 +38,17 @@ module.exports = async (req, res) => {
         const data = response.data;
 
         if (data.ok) {
-            // Success: Installation complete. The app is now fully functional.
-            // data.access_token contains the vital 'xoxb-' token, now stored by Vercel's runtime.
+            // Success: Installation complete.
             res.status(200).send('<h1>Success! Slack App Installed.</h1><p>You can close this window now and use the /meet command.</p>');
         } else {
-            // Slack rejected the exchange (e.g., secret wrong, code expired)
+            // Failure: Slack rejected the exchange (e.g., 'invalid_client_secret')
             console.error('Slack OAuth Error:', data.error);
             res.status(500).send(`Installation Failed. Slack Error: ${data.error}`);
         }
 
     } catch (error) {
-        console.error('External API Call Failed:', error.message);
-        res.status(500).send('Internal Server Error during token exchange. Check Vercel logs.');
+        // The function is crashing before a response is sent to Slack
+        console.error('API Function Crashed:', error.message);
+        res.status(500).send('Internal Server Error: Token exchange process failed.');
     }
 };
